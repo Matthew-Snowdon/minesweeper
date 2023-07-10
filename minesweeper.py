@@ -8,7 +8,7 @@ BANNER_HEIGHT = 100
 SCREEN_HEIGHT = 600 + BANNER_HEIGHT
 ROWS = 10
 COLS = 10
-MINES = 99
+MINES = 15
 CELL_SIZE = SCREEN_WIDTH // COLS
 # Button dimensions
 BUTTON_WIDTH = CELL_SIZE * 1.2
@@ -110,11 +110,15 @@ board = []  # This initializes board as an empty list
 mines = []  # Store the coordinates of mines
 flag_count = MINES
 button_state = 'normal'
+button_clicked = False
+cell_clicked = False
 
 # Create a dictionary to map game state to images
 images = {'smile': smile_img, 'shock': shock_img, 'sad': sad_img,
-          'winner': winner_img, 'smile_flat': smile_flat,
-          'winner_flat': winner_flat, 'sad_flat': sad_flat}
+          'winner': winner_img}
+
+pressed_images = {'smile': smile_flat, 'winner': winner_flat,
+                  'sad': sad_flat, 'shock': shock_img}
 
 
 # define game functions
@@ -205,33 +209,39 @@ def draw_board(game_board):
 
 
 def reveal_cell(row, col):
-    global game_over, game_over_mine, game_active, game_state
+    global game_over, game_over_mine, game_active, game_state, button_img
     if not revealed[row][col] and not flagged[row][col]:
         revealed[row][col] = True
         if board[row][col] == '#':
             game_over = True
             game_active = False
             game_state = 'sad'
+            button_img = images[game_state]
+            pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
+            DISPLAYSURF.blit(button_img, button_rect.topleft)
+            pygame.display.update()  # Update the display
             game_over_mine = (row, col)
             print("Game Over!")
         elif board[row][col] == '0':
             for row_offset in range(-1, 2):
                 for col_offset in range(-1, 2):
-                    if (0 <= row + row_offset < ROWS) and (0 <= col +
-                                                           col_offset < COLS):
+                    if (0 <= row + row_offset < ROWS) and (
+                            0 <= col + col_offset < COLS):
                         reveal_cell(row + row_offset, col + col_offset)
         check_game_won()  # Check if the game is won after revealing a cell
 
 
 def reset_game():
     global start_ticks, flag_count, game_active, game_over, first_click, \
-        revealed, flagged, questioned, game_state
-    game_state = 'smile'
+        revealed, flagged, questioned, game_state, button_img, pressed
     start_ticks = pygame.time.get_ticks()
     flag_count = MINES
     game_active = True
     game_over = False
     first_click = True
+    game_state = 'smile'
+    button_img = images[game_state]
+    pressed = None
     revealed = [[False for _ in range(ROWS)] for _ in range(COLS)]
     flagged = [[False for _ in range(ROWS)] for _ in range(COLS)]
     questioned = [[False for _ in range(ROWS)] for _ in range(COLS)]
@@ -240,7 +250,7 @@ def reset_game():
 
 
 def check_game_won():
-    global game_over, game_active, game_state
+    global game_over, game_active, game_state, button_img
     if not game_over and game_active:
         for row in range(ROWS):
             for col in range(COLS):
@@ -249,16 +259,12 @@ def check_game_won():
         game_over = True
         game_active = False
         game_state = 'winner'
-        print("Congratulations! You won!")
-
-        # Draw the game board with revealed cells
-        draw_board(board)
-
-        # Draw the button with the appropriate image based on the game state
         button_img = images[game_state]
         pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
         DISPLAYSURF.blit(button_img, button_rect.topleft)
-
+        print("Congratulations! You won!")
+        # Draw the game board with revealed cells
+        draw_board(board)
         # Update the display
         pygame.display.update()
 
@@ -276,77 +282,119 @@ while True:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 if button_rect.collidepoint(event.pos):
-                    if game_state == 'winner':
-                        button_img = winner_flat
-                    else:
-                        button_img = smile_flat
                     button_state = 'pressed'
-                continue
+                    button_clicked = True
+                    if game_over:
+                        button_img = sad_flat
+                        pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
+                        DISPLAYSURF.blit(button_img, button_rect.topleft)
+                        pygame.display.update()
+                else:
+                    button_state = 'normal'
+                    button_clicked = False
+
             if game_over:  # Don't handle any more mouse presses if the game
                 # is over
                 continue
+
             col = event.pos[0] // CELL_SIZE
-            # Subtract the banner height from the y-coordinate
             row = (event.pos[1] - BANNER_HEIGHT) // CELL_SIZE
-            # Add a boundary check to avoid going off the grid
+
             if row < 0 or row >= ROWS or col < 0 or col >= COLS:
-                continue
-            if game_active:  # Only allow changes if the game is active
-                if event.button == 1 and not flagged[row][col]:
-                    # Left-click and cell not flagged
-                    # Register a press on a non-flagged and non-revealed cell
+                cell_clicked = True
+            elif game_active and pygame.mouse.get_pressed()[0]:
+                game_state = 'shock'
+                button_img = images[game_state]
+                if flagged[row][col]:  # The cell is flagged
+                    pass  # Do nothing when left-clicking a flagged cell
+                elif not revealed[row][col]:  # The cell isn't revealed
                     pressed = (row, col)
-                elif event.button == 3 and not revealed[row][col]:
-                    # Right-click and cell not revealed
-                    # Handle flag placement
-                    toggle_flag(row, col)
+            elif event.button == 3 and game_active:
+                col = event.pos[0] // CELL_SIZE
+                row = (event.pos[1] - BANNER_HEIGHT) // CELL_SIZE
+                if row < 0 or row >= ROWS or col < 0 or col >= COLS:
+                    continue
+                if not revealed[row][col]:  # Right-click and cell not revealed
+                    toggle_flag(row, col)  # Handle flag placement
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                if button_state == 'pressed' and button_rect.collidepoint(
-                        event.pos):
+                button_state = 'normal'
+                if button_rect.collidepoint(event.pos) and button_clicked:
                     reset_game()  # Reset the game when button is released
-                    button_img = smile_img  # Reset button image to smile
-                    button_state = 'normal'
+                    game_state = 'smile'  # Reset the game state
+                    button_img = images[game_state]
+                    pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
+                    DISPLAYSURF.blit(button_img, button_rect.topleft)
+                    pygame.display.update()
+                elif game_over:
+                    button_img = sad_img
+                    pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
+                    DISPLAYSURF.blit(button_img, button_rect.topleft)
+                    pygame.display.update()
+                else:
+                    game_state = 'smile'
+                    button_img = images[game_state]
+                    pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
+                    DISPLAYSURF.blit(button_img, button_rect.topleft)
+                    pygame.display.update()
+
+                button_clicked = False
 
             if game_over:  # Don't handle any more mouse presses if the game
                 # is over
                 continue
+
             col = event.pos[0] // CELL_SIZE
             row = (event.pos[1] - BANNER_HEIGHT) // CELL_SIZE
-            # Add a boundary check to avoid going off the grid
             if row < 0 or row >= ROWS or col < 0 or col >= COLS:
                 continue
-            # Only allow changes if the game is active and left mouse button
-            # is released
+
             if game_active and event.button == 1 and not flagged[row][col]:
-                # Move the generation of board to here, right before
-                # revealing the cell
+                game_state = 'smile'
+                button_img = images[game_state]
                 if first_click:
                     first_click = False
                     generate_board_except(row, col)
-                # Handle cell revealing
-                reveal_cell(row, col)
+                reveal_cell(row, col)  # Handle cell revealing
+
             pressed = None  # Reset the pressed state
 
         elif event.type == pygame.MOUSEMOTION:
-            # Update the pressed state with the new cell if the left mouse
-            # button is still down
+            # Check if left mouse button is still down
             if pygame.mouse.get_pressed()[0]:
+                if button_rect.collidepoint(event.pos):
+                    # Mouse is inside the button area
+                    if game_over:
+                        button_img = sad_flat
+                    else:
+                        # Your existing logic when the game isn't over
+                        if button_state != 'pressed':
+                            if game_state == 'winner':
+                                button_img = pressed_images[game_state]
+                            else:
+                                button_img = smile_flat
+                            button_state = 'pressed'
+                else:
+                    # Mouse moved out of the button area
+                    if game_over:
+                        button_img = sad_img
+                    else:
+                        # Your existing logic when the game isn't over
+                        if button_state == 'pressed':
+                            button_state = 'normal'
+                            button_img = images[game_state]
+                pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
+                DISPLAYSURF.blit(button_img, button_rect.topleft)
+                pygame.display.update()
                 col = event.pos[0] // CELL_SIZE
                 row = (event.pos[1] - BANNER_HEIGHT) // CELL_SIZE
                 # Add a boundary check to avoid going off the grid
-                if row < 0 or row >= ROWS or col < 0 or col >= COLS:
-                    # Reset the pressed state if mouse is off the game grid
-                    pressed = None
-                    continue
-                if not flagged[row][col] and not revealed[row][col]:
+                if 0 <= row < ROWS and 0 <= col < COLS and not \
+                        flagged[row][col] and not revealed[row][col]:
                     pressed = (row, col)
-
-            elif pygame.mouse.get_pressed()[0] and button_state == 'pressed':
-                # button state
-                if not button_rect.collidepoint(event.pos):
-                    button_state = 'normal'
+                else:
+                    pressed = None
 
     elapsed_time = pygame.time.get_ticks() - start_ticks
     seconds = min((elapsed_time // 1000), 999)
@@ -460,19 +508,10 @@ while True:
                               BUTTON_HEIGHT)
 
     # Draw the button with the appropriate image based on the game state
-    if button_state == 'pressed':
-        if game_state == 'winner':
-            button_img = winner_flat
-        else:
-            button_img = smile_flat
-    elif game_state == 'smile':
-        button_img = smile_img
-    elif game_state == 'shock':
-        button_img = shock_img
-    elif game_state == 'sad':
-        button_img = sad_img
-    elif game_state == 'winner':
-        button_img = winner_img
+    button_img = images[game_state]
+    # Determine the correct button image based on the game state
+    if button_state == 'pressed':  # Change the image if the button is pressed
+        button_img = pressed_images[game_state]
 
     pygame.draw.rect(DISPLAYSURF, BLACK, button_rect)
     DISPLAYSURF.blit(button_img, button_rect.topleft)
