@@ -1,9 +1,3 @@
-Add an outer frame that includes a banner
-	- reset button that has four states (smiling, sad, shocked and smiling glasses)
-
-smiling for neutral, shocked when holding left click, sad when hitting a mine and glasses for winning! clicking the
-button resets the board clock and flag counter
-
-test for bugs and run look to improve code structure further
-
-fix bug where you can have max flags and a question mark but not be able to toggle the question mark off
+# Add comments and docstrings when program is complete
+# run through your code at the end and add error handling
+# see if you can optimise each line of code, maybe you've reused certain code that could be used in a function
