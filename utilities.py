@@ -1,16 +1,50 @@
 import pygame
 
 # game settings
-MARGIN_SIZE = 20  # Set margin size
-SCREEN_WIDTH = 600 + MARGIN_SIZE * 2
-BANNER_HEIGHT = 120 - MARGIN_SIZE
-adjusted_banner_height = BANNER_HEIGHT - MARGIN_SIZE
-SCREEN_HEIGHT = 600 + BANNER_HEIGHT + MARGIN_SIZE * 2
-ROWS = 10
-COLS = 10
-MINES = 15
-CELL_SIZE = (SCREEN_WIDTH - 2 * MARGIN_SIZE) // COLS
-flag_count = MINES
+game_settings = {
+    "ROWS": 16,  # initial setting, will change based on difficulty
+    "COLS": 30,  # initial setting, will change based on difficulty
+    "MINES": 99,  # initial setting, will change based on difficulty
+    "MARGIN_SIZE": 20,  # This is static
+    "CELL_SIZE": 50,  # This is static now
+    "BANNER_HEIGHT": 120,  # This is static
+}
+
+game_settings.update({
+    "SCREEN_WIDTH": game_settings["COLS"] * game_settings["CELL_SIZE"] +
+                    game_settings["MARGIN_SIZE"] * 2,
+    "SCREEN_HEIGHT": game_settings["ROWS"] * game_settings["CELL_SIZE"] +
+                     game_settings["BANNER_HEIGHT"] + game_settings[
+                         "MARGIN_SIZE"] * 2,
+    "flag_count": game_settings["MINES"],
+    "adjusted_banner_height": game_settings["BANNER_HEIGHT"] - game_settings[
+        "MARGIN_SIZE"]
+})
+
+
+def update_screen_size():
+    # Update screen size based on rows and columns
+    game_settings["SCREEN_WIDTH"] = \
+        game_settings["COLS"] * game_settings["CELL_SIZE"] + \
+        game_settings["MARGIN_SIZE"] * 2
+    game_settings["SCREEN_HEIGHT"] = \
+        game_settings["ROWS"] * game_settings["CELL_SIZE"] + \
+        game_settings["BANNER_HEIGHT"] + game_settings["MARGIN_SIZE"] * 2
+
+    # Update margin images
+    global h_margin_img, v_margin_img
+    h_margin_img = load_image('h_margin',
+                              game_settings["SCREEN_WIDTH"],
+                              game_settings["MARGIN_SIZE"])
+    v_margin_img = load_image('v_margin',
+                              game_settings["MARGIN_SIZE"],
+                              game_settings["SCREEN_HEIGHT"])
+
+    # Update other settings
+    game_settings["flag_count"] = game_settings["MINES"]
+    game_settings["adjusted_banner_height"] = \
+        game_settings["BANNER_HEIGHT"] - game_settings["MARGIN_SIZE"]
+
 
 # Button dimensions
 BUTTON_WIDTH = 70
@@ -34,7 +68,8 @@ def blit_img(surface, image, pos):
 
 
 # Load images
-def load_image(loaded_name, width=CELL_SIZE, height=CELL_SIZE):
+def load_image(loaded_name, width=game_settings["CELL_SIZE"],
+               height=game_settings["CELL_SIZE"]):
     loaded_img = pygame.image.load(f'assets/{loaded_name}.png')
     return pygame.transform.scale(loaded_img, (width, height))
 
@@ -44,12 +79,25 @@ image_dict = {}
 for name in ['top_L_corner', 'top_R_corner', 'bottom_L_corner',
              'bottom_R_corner', 'banner_margin_L', 'banner_margin_R']:
     img = pygame.image.load(f'assets/{name}.png')
-    img = pygame.transform.scale(img, (MARGIN_SIZE, MARGIN_SIZE))
+    img = pygame.transform.scale(img, (
+        game_settings["MARGIN_SIZE"], game_settings["MARGIN_SIZE"]))
     image_dict[name] = img
 
 # Load and scale margin images
-h_margin_img = load_image('h_margin', SCREEN_WIDTH, MARGIN_SIZE)
-v_margin_img = load_image('v_margin', MARGIN_SIZE, SCREEN_HEIGHT)
+h_margin_img = load_image('h_margin', game_settings["SCREEN_WIDTH"],
+                          game_settings["MARGIN_SIZE"])
+v_margin_img = load_image('v_margin', game_settings["MARGIN_SIZE"],
+                          game_settings["SCREEN_HEIGHT"])
+
+# Adjust the settings to 'Beginner' difficulty
+game_settings["ROWS"] = 9
+game_settings["COLS"] = 9
+game_settings["MINES"] = 10
+game_settings["SCREEN_WIDTH"] = 9 * game_settings["CELL_SIZE"] + 2 * \
+                                game_settings["MARGIN_SIZE"]
+game_settings["SCREEN_HEIGHT"] = 9 * game_settings["CELL_SIZE"] + \
+                                 game_settings["BANNER_HEIGHT"] + 2 * \
+                                 game_settings["MARGIN_SIZE"]
 
 # Create a dictionary for the corner images
 corners = {
@@ -64,19 +112,27 @@ corners = {
 
 def draw_margins_and_corners(DISPLAYSURF, h_margin_img, v_margin_img, corners):
     blit_img(DISPLAYSURF, h_margin_img, (0, 0))
-    blit_img(DISPLAYSURF, h_margin_img, (0, SCREEN_HEIGHT - MARGIN_SIZE))
-    blit_img(DISPLAYSURF, h_margin_img, (0, BANNER_HEIGHT))
+    blit_img(DISPLAYSURF, h_margin_img, (
+        0, game_settings["SCREEN_HEIGHT"] - game_settings["MARGIN_SIZE"]))
+    blit_img(DISPLAYSURF, h_margin_img, (0,
+                                         game_settings["BANNER_HEIGHT"]))
     blit_img(DISPLAYSURF, v_margin_img, (0, 0))
-    blit_img(DISPLAYSURF, v_margin_img, (SCREEN_WIDTH - MARGIN_SIZE, 0))
+    blit_img(DISPLAYSURF, v_margin_img, (game_settings["SCREEN_WIDTH"] -
+                                         game_settings["MARGIN_SIZE"], 0))
 
     corner_names = ['top_L', 'top_R', 'bottom_L', 'bottom_R', 'banner_L',
                     'banner_R']
-    corner_positions = [(0, 0), (SCREEN_WIDTH - MARGIN_SIZE, 0),
-                        (0, SCREEN_HEIGHT - MARGIN_SIZE),
-                        (SCREEN_WIDTH - MARGIN_SIZE,
-                         SCREEN_HEIGHT - MARGIN_SIZE),
-                        (0, BANNER_HEIGHT),
-                        (SCREEN_WIDTH - MARGIN_SIZE, BANNER_HEIGHT)]
+    corner_positions = [(0, 0), (
+        game_settings["SCREEN_WIDTH"] - game_settings["MARGIN_SIZE"], 0),
+                        (0, game_settings["SCREEN_HEIGHT"] - game_settings[
+                            "MARGIN_SIZE"]),
+                        (game_settings["SCREEN_WIDTH"] - game_settings[
+                            "MARGIN_SIZE"],
+                         game_settings["SCREEN_HEIGHT"] - game_settings[
+                             "MARGIN_SIZE"]),
+                        (0, game_settings["BANNER_HEIGHT"]),
+                        (game_settings["SCREEN_WIDTH"] - game_settings[
+                            "MARGIN_SIZE"], game_settings["BANNER_HEIGHT"])]
 
     for corner, position in zip(corner_names, corner_positions):
         blit_img(DISPLAYSURF, corners[corner], position)

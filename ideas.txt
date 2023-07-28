@@ -1,3 +1,12 @@
+# add a tip at the top of the menu start screen "hit ESC to bring up the menu WARNING:game state lost " 
+(maybe implement some way to return to the current game)
+# add a controls section of the main menu
+# add a menu condition for when you win the game to enter your name and save the score to the leaderboard
+# fix all bugs
+
 # Add comments and docstrings when program is complete
 # run through your code at the end and add error handling
 # see if you can optimise each line of code, maybe you've reused certain code that could be used in a function
+
+# implement the game onto your website, hosted by AWS or something similar so you can have server space for
+the leaderboard

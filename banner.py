@@ -7,7 +7,7 @@ class Banner:
         self.game_state_images = game_state_image
         self.pressed_images = pressed_image
         self.game_font = pygame.font.Font('assets/digital7.ttf', 70)
-        self.counter = flag_count
+        self.counter = game_settings["flag_count"]
         self.timer = 0  # Set initial timer value
         self.button_rect = None
         self.button_state = 'normal'
@@ -15,16 +15,21 @@ class Banner:
     def draw_banner(self):
         # draw banner
         pygame.draw.rect(self.display_surface, (179, 179, 179),
-                         pygame.Rect(MARGIN_SIZE, MARGIN_SIZE,
-                                     SCREEN_WIDTH - 2 * MARGIN_SIZE,
-                                     BANNER_HEIGHT - MARGIN_SIZE))
+                         pygame.Rect(game_settings["MARGIN_SIZE"],
+                                     game_settings["MARGIN_SIZE"],
+                                     game_settings["SCREEN_WIDTH"] - 2 *
+                                     game_settings["MARGIN_SIZE"],
+                                     game_settings["BANNER_HEIGHT"] -
+                                     game_settings["MARGIN_SIZE"]))
 
     def draw_counter(self):
         counter_text = self.game_font.render(f'{self.counter:03}', True, RED)
         counter_width, counter_height = counter_text.get_size()
-        counter_pos_y = MARGIN_SIZE + (adjusted_banner_height / 2) - (
-                counter_height / 2)
-        counter_pos = (MARGIN_SIZE + 14, counter_pos_y)
+        counter_pos_y = (game_settings["MARGIN_SIZE"] +
+                         (game_settings["adjusted_banner_height"] // 2) -
+                         (counter_height // 2))
+
+        counter_pos = (game_settings["MARGIN_SIZE"] + 14, counter_pos_y)
         counter_rect = counter_text.get_rect(topleft=counter_pos)
         counter_under_text_surface = self.game_font.render('888', True, RED)
         counter_under_text_surface.set_alpha(76)
@@ -39,9 +44,12 @@ class Banner:
     def draw_timer(self):
         timer_text = self.game_font.render(f'{self.timer:03}', True, RED)
         text_width, text_height = timer_text.get_size()
-        timer_pos_y = MARGIN_SIZE + (adjusted_banner_height / 2) - (
-                text_height / 2)
-        timer_pos = (SCREEN_WIDTH - text_width - 14 - MARGIN_SIZE, timer_pos_y)
+        timer_pos_y = (game_settings["MARGIN_SIZE"] +
+                       (game_settings["adjusted_banner_height"] // 2) -
+                       (text_height // 2))
+
+        timer_pos = (game_settings["SCREEN_WIDTH"] - text_width - 14 -
+                     game_settings["MARGIN_SIZE"], timer_pos_y)
         timer_rect = timer_text.get_rect(topleft=timer_pos)
         under_text_surface = self.game_font.render('888', True, RED)
         under_text_surface.set_alpha(76)
@@ -57,11 +65,13 @@ class Banner:
 
         # Calculate the center position between the timer and the counter
         center_x = (timer_rect.centerx + counter_rect.centerx) // 2
-        center_y = MARGIN_SIZE + BANNER_HEIGHT / 2
+        center_y = (game_settings["MARGIN_SIZE"] +
+                    game_settings["BANNER_HEIGHT"] / 2)
 
         # Calculate the top-left position of the button
-        button_pos_y = MARGIN_SIZE + (adjusted_banner_height / 2) - (
-                BUTTON_HEIGHT / 2)
+        button_pos_y = (game_settings["MARGIN_SIZE"] +
+                        (game_settings["adjusted_banner_height"] / 2) -
+                        (BUTTON_HEIGHT / 2))
         button_pos_x = center_x - BUTTON_WIDTH // 2
 
         # Create the button rectangle
