@@ -1,0 +1,11 @@
+-can't change between difficulty levels, advanced and expert are "list index out of range" crashes
+
+-timer starts when you start the program, we want it to start on the first click
+-reset game does not reset the timer to zero and the first click to False
+-cells not reacting to mouse movement over them
+-flag counter not updating
+-add functionality to return to the gameboard if you hit ESC again
+-current functionality saves game state when menu is brought up
+-small visual issue on the banner button if the key press originates on the board and is held over the button,
+ the button image flashes between states.
+-if the cursor is on a flag and you press the button image state shouldn't update to shock but it does.

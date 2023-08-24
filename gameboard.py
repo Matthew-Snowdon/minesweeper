@@ -16,7 +16,7 @@ class GameBoard:
         self.flag_count = mines
         self.game_over = False
         self.game_active = True
-        self.first_click = True
+        self.first_click = False
         self.revealed = [[False for _ in range(cols)] for _ in range(rows)]
         self.flagged = [[False for _ in range(cols)] for _ in range(rows)]
         self.questioned = [[False for _ in range(cols)] for _ in range(rows)]
@@ -24,6 +24,8 @@ class GameBoard:
         self.game_state = 'smile'
         self.pressed = None
         self.first_mine_revealed = False
+        self.start_ticks = None
+        self.cell_clicked = False
 
     def generate_board_except(self, row, col):
         self.board = [['-' for col in range(game_settings["COLS"])] for row in
@@ -145,13 +147,13 @@ class GameBoard:
             self.check_game_won()
 
     def reset_game(self):
-        pygame.time.get_ticks()
+        self.start_ticks = pygame.time.get_ticks()
+        self.game_started = False
         self.flag_count = game_settings["MINES"]
         self.game_active = True
         self.game_over = False
-        self.first_click = True
+        self.first_click = False
         self.game_state = 'smile'
-        self.game_started = False
         self.pressed = None
         self.revealed = [[False for _ in range(game_settings["ROWS"])] for _ in
                          range(game_settings["COLS"])]

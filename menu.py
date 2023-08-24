@@ -14,18 +14,29 @@ theme = pygame_menu.themes.Theme(
 
 
 class GameMenu:
-    def __init__(self, surface, game_loop, draw):
+    def __init__(self, surface, game_loop, draw, gameboard=None, banner=None):
+        self.gameboard = gameboard
+        self.banner = banner
+        self.controls_menu = None
         self.difficulty = 1
         self.surface = surface
         self.game_loop = game_loop
         self.draw = draw
-        self.game_started = False
         self.level_menu = None
         self.menu = None
         self.create_menu(game_settings["SCREEN_WIDTH"],
                          game_settings["SCREEN_HEIGHT"])
 
     def create_menu(self, width, height):
+        # Create a controls menu
+        self.controls_menu = pygame_menu.Menu('Controls', width, height,
+                                         theme=theme)
+        self.controls_menu.add.label('ESC: Show Menu', max_char=-1)
+        self.controls_menu.add.label('Left-Click: Interact with cells',
+                                     max_char=-1)
+        self.controls_menu.add.label('Right-Click: Toggle flags', max_char=-1)
+        self.controls_menu.add.button('Back', pygame_menu.events.BACK)
+
         self.level_menu = pygame_menu.Menu('Difficulty Level', width,
                                            height, theme=theme)
         difficulty_selector = self.level_menu.add.selector(
@@ -38,9 +49,12 @@ class GameMenu:
 
         self.level_menu.add.button('Start Game', self.start_game)
         self.level_menu.add.button('Back', pygame_menu.events.BACK)
-
         self.menu = pygame_menu.Menu('', width, height, theme=theme)
+        self.menu.add.label(
+            "Hit ESC to bring up the menu WARNING: game state lost",
+            max_char=-1, font_color=(255, 0, 0))
         self.menu.add.button('Play', self.level_menu)
+        self.menu.add.button('Controls', self.controls_menu)
         self.menu.add.button('Quit', pygame_menu.events.EXIT)
 
     def resize_menu(self, width, height):
@@ -77,14 +91,19 @@ class GameMenu:
         self.resize_menu(game_settings["SCREEN_WIDTH"],
                          game_settings["SCREEN_HEIGHT"])
 
-        banner = Banner(self.surface, game_state_images, pressed_images)
-        gameboard = GameBoard(self.surface, banner, game_settings["ROWS"],
-                              game_settings["COLS"], game_settings["MINES"],
-                              self.game_started)
+        if not self.banner:
+            self.banner = Banner(self.surface, game_state_images,
+                                 pressed_images)
+        if not self.gameboard:
+            self.gameboard = GameBoard(self.surface, self.banner,
+                                       game_settings["ROWS"],
+                                       game_settings["COLS"],
+                                       game_settings["MINES"],
+                                       self.gameboard.game_started)
 
-        self.game_started = True
+        self.gameboard.game_started = True
 
-        self.game_loop(gameboard, banner)
+        self.game_loop(self.gameboard, self.banner)
 
     def run(self):
         self.menu.mainloop(self.surface)

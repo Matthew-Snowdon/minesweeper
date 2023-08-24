@@ -11,6 +11,8 @@ class Banner:
         self.timer = 0  # Set initial timer value
         self.button_rect = None
         self.button_state = 'normal'
+        self.button_clicked = False
+        self.button_img = images['smile']
 
     def draw_banner(self):
         # draw banner

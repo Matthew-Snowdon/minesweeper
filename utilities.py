@@ -2,9 +2,9 @@ import pygame
 
 # game settings
 game_settings = {
-    "ROWS": 16,  # initial setting, will change based on difficulty
-    "COLS": 30,  # initial setting, will change based on difficulty
-    "MINES": 99,  # initial setting, will change based on difficulty
+    "ROWS": 9,  # initial setting, will change based on difficulty
+    "COLS": 9,  # initial setting, will change based on difficulty
+    "MINES": 10,  # initial setting, will change based on difficulty
     "MARGIN_SIZE": 20,  # This is static
     "CELL_SIZE": 50,  # This is static now
     "BANNER_HEIGHT": 120,  # This is static

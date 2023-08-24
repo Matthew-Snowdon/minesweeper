@@ -16,39 +16,9 @@ def draw(gboard, _banner):
 # initialize Pygame
 pygame.init()
 
-# initialize game state
-game_started = False
-game_state = 'smile'
-game_over = False
-first_click = True
-button_state = 'normal'
-button_clicked = False
-cell_clicked = False
-button_img = images['smile']
-
-# Create the main display surface
-DISPLAYSURF = pygame.display.set_mode((game_settings["SCREEN_WIDTH"],
-                                       game_settings["SCREEN_HEIGHT"]))
-pygame.display.set_caption('Minesweeper')
-
-# Initialize the start time
-start_ticks = pygame.time.get_ticks()
-
-# Create an instance of your GameBoard and Banner classes
-banner = Banner(DISPLAYSURF, game_state_images, pressed_images)
-gameboard = GameBoard(DISPLAYSURF, banner, game_settings["ROWS"],
-                      game_settings["COLS"], game_settings["MINES"],
-                      game_started)
-
-
-gameboard.reset_game()
-
 
 # game loop
 def game_loop(gameboard, banner):
-    global button_state, button_clicked, cell_clicked, button_img, \
-        game_state, game_over, first_click, start_ticks
-
     while True:
         # handle events
         for event in pygame.event.get():
@@ -58,49 +28,54 @@ def game_loop(gameboard, banner):
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:  # The escape key was pressed
-                    global game_started
-                    game_started = False
+                    game_menu.game_started = False
                     game_menu.run()  # Show the menu
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     if banner.button_rect.collidepoint(event.pos):
-                        button_state = 'pressed'
-                        button_clicked = True
-                        if game_over:
-                            button_img = images['sad_flat']
+                        banner.button_state = 'pressed'
+                        banner.button_clicked = True
+                        if gameboard.game_over:
+                            banner.button_img = images['sad_flat']
                             pygame.draw.rect(DISPLAYSURF, BLACK,
                                              banner.button_rect)
-                            DISPLAYSURF.blit(button_img,
+                            DISPLAYSURF.blit(banner.button_img,
                                              banner.button_rect.topleft)
                             pygame.display.update()
                     else:
-                        button_state = 'normal'
-                        button_clicked = False
+                        banner.button_state = 'normal'
+                        banner.button_clicked = False
 
-                if game_over:  # Don't handle any more mouse presses if the
-                    # game
+                if gameboard.game_over:
+                    # Don't handle any more mouse presses if the game
                     continue
 
-                col = event.pos[0] // game_settings["CELL_SIZE"]
-                row = ((event.pos[1] - game_settings["BANNER_HEIGHT"]) //
-                       game_settings["CELL_SIZE"])
+                col = (event.pos[0] -
+                       game_settings["MARGIN_SIZE"]) // game_settings[
+                    "CELL_SIZE"]
+                row = ((event.pos[1] - game_settings["BANNER_HEIGHT"] -
+                        game_settings["MARGIN_SIZE"]) // game_settings[
+                           "CELL_SIZE"])
 
                 if row < 0 or row >= game_settings["ROWS"] or col < 0 or \
                         col >= game_settings["COLS"]:
-                    cell_clicked = True
+                    gameboard.cell_clicked = True
                 elif gameboard.game_active and pygame.mouse.get_pressed()[0]:
-                    game_state = 'shock'
-                    button_img = images[game_state]
+                    gameboard.game_state = 'shock'
+                    banner.button_img = images[gameboard.game_state]
                     if gameboard.flagged[row][col]:  # The cell is flagged
                         pass  # Do nothing when left-clicking a flagged cell
                     elif not gameboard.revealed[row][
                         col]:  # Cell isn't revealed
                         pressed = (row, col)
                 elif event.button == 3 and gameboard.game_active:
-                    col = event.pos[0] // game_settings["CELL_SIZE"]
-                    row = ((event.pos[1] - game_settings["BANNER_HEIGHT"]) //
-                           game_settings["CELL_SIZE"])
+                    col = (event.pos[0] - game_settings["MARGIN_SIZE"]) // \
+                          game_settings["CELL_SIZE"]
+                    row = ((event.pos[1] - game_settings["BANNER_HEIGHT"] -
+                            game_settings["MARGIN_SIZE"]) // game_settings[
+                               "CELL_SIZE"])
+
                     if row < 0 or row >= game_settings["ROWS"] or col < 0 or \
                             col >= game_settings["COLS"]:
                         continue
@@ -111,52 +86,79 @@ def game_loop(gameboard, banner):
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-                    button_state = 'normal'
+                    banner.button_state = 'normal'
                     if banner.button_rect.collidepoint(
-                            event.pos) and button_clicked:
-                        gameboard.reset_game()  # Reset the game when button is
-                        game_state = 'smile'  # Reset the game state
-                        button_img = images[game_state]
+                            event.pos) and banner.button_clicked:
+                        gameboard.reset_game()  # Reset the game
+                        game_menu.game_started = False  # Don't start the
+                        # timer yet
+                        gameboard.first_click = False  # Indicate that the
+                        # first click hasn't happened
+                        gameboard.game_state = 'smile'  # Reset the game state
+                        banner.button_img = images[gameboard.game_state]
                         pygame.draw.rect(DISPLAYSURF, BLACK,
                                          banner.button_rect)
-                        DISPLAYSURF.blit(button_img,
+                        DISPLAYSURF.blit(banner.button_img,
                                          banner.button_rect.topleft)
                         pygame.display.update()
-                    elif game_over:
-                        button_img = images['sad']
+                    elif gameboard.game_over:
+                        banner.button_img = images['sad']
                         pygame.draw.rect(DISPLAYSURF, BLACK,
                                          banner.button_rect)
-                        DISPLAYSURF.blit(button_img,
+                        DISPLAYSURF.blit(banner.button_img,
                                          banner.button_rect.topleft)
                         pygame.display.update()
                     else:
-                        game_state = 'smile'
-                        button_img = images[game_state]
+                        col = (event.pos[0] - game_settings[
+                            "MARGIN_SIZE"]) // game_settings["CELL_SIZE"]
+                        row = ((event.pos[1] - game_settings["BANNER_HEIGHT"] -
+                                game_settings["MARGIN_SIZE"]) // game_settings[
+                                   "CELL_SIZE"])
+
+                        if 0 <= row < game_settings["ROWS"] and 0 <= col < \
+                                game_settings["COLS"]:
+                            if not gameboard.first_click:  # Start the timer
+                                # on the first cell click
+                                gameboard.first_click = True
+                                game_menu.game_started = True
+                                gameboard.start_ticks = pygame.time.get_ticks()
+
+                                # Include logic to reveal cell and other
+                                # game starting logic if needed
+                                gameboard.generate_board_except(row, col)
+                                gameboard.reveal_cell(row, col)
+
+                        gameboard.game_state = 'smile'
+                        banner.button_img = images[gameboard.game_state]
                         pygame.draw.rect(DISPLAYSURF, BLACK,
                                          banner.button_rect)
-                        DISPLAYSURF.blit(button_img,
+                        DISPLAYSURF.blit(banner.button_img,
                                          banner.button_rect.topleft)
                         pygame.display.update()
 
-                    button_clicked = False
+                    banner.button_clicked = False
 
-                if game_over:  # Don't handle any more mouse presses if the
+                if gameboard.game_over:  # Don't handle any more mouse
+                    # presses if the
                     # game
                     continue
 
-                col = event.pos[0] // game_settings["CELL_SIZE"]
-                row = ((event.pos[1] - game_settings["BANNER_HEIGHT"]) //
-                       game_settings["CELL_SIZE"])
+                col = (event.pos[0] - game_settings[
+                    "MARGIN_SIZE"]) // game_settings["CELL_SIZE"]
+                row = ((event.pos[1] - game_settings["BANNER_HEIGHT"] -
+                        game_settings["MARGIN_SIZE"]) // game_settings[
+                           "CELL_SIZE"])
+
                 if row < 0 or row >= game_settings["ROWS"] or col < 0 or \
                         col >= game_settings["COLS"]:
                     continue
 
                 if gameboard.game_active and event.button == 1 \
                         and not gameboard.flagged[row][col]:
-                    game_state = 'smile'
-                    button_img = images[game_state]
-                    if first_click:
-                        first_click = False
+                    gameboard.game_state = 'smile'
+                    banner.button_img = images[gameboard.game_state]
+                    if not gameboard.first_click:
+                        gameboard.first_click = True
                         gameboard.generate_board_except(row, col)
                     gameboard.reveal_cell(row, col)  # Handle cell revealing
 
@@ -165,28 +167,34 @@ def game_loop(gameboard, banner):
             elif event.type == pygame.MOUSEMOTION:
                 if pygame.mouse.get_pressed()[0]:
                     if banner.button_rect.collidepoint(event.pos):
-                        if game_over:
-                            button_img = images['sad_flat']
+                        if gameboard.game_over:
+                            banner.button_img = images['sad_flat']
                         else:
-                            if button_state != 'pressed':
-                                if game_state == 'winner':
-                                    button_img = pressed_images[game_state]
+                            if banner.button_state != 'pressed':
+                                if gameboard.game_state == 'winner':
+                                    banner.button_img = pressed_images[
+                                        gameboard.game_state]
                                 else:
-                                    button_img = images['smile_flat']
-                                button_state = 'pressed'
+                                    banner.button_img = images['smile_flat']
+                                banner.button_state = 'pressed'
                     else:
-                        if game_over:
-                            button_img = images['sad']
+                        if gameboard.game_over:
+                            banner.button_img = images['sad']
                         else:
-                            if button_state == 'pressed':
-                                button_state = 'normal'
-                                button_img = images[game_state]
+                            if banner.button_state == 'pressed':
+                                banner.button_state = 'normal'
+                                banner.button_img = images[
+                                    gameboard.game_state]
                     pygame.draw.rect(DISPLAYSURF, BLACK, banner.button_rect)
-                    DISPLAYSURF.blit(button_img, banner.button_rect.topleft)
+                    DISPLAYSURF.blit(banner.button_img,
+                                     banner.button_rect.topleft)
                     pygame.display.update()
-                    col = event.pos[0] // game_settings["CELL_SIZE"]
-                    row = ((event.pos[1] - game_settings["BANNER_HEIGHT"]) //
-                           game_settings["CELL_SIZE"])
+                    col = (event.pos[0] - game_settings[
+                        "MARGIN_SIZE"]) // game_settings["CELL_SIZE"]
+                    row = ((event.pos[1] - game_settings["BANNER_HEIGHT"] -
+                            game_settings["MARGIN_SIZE"]) // game_settings[
+                               "CELL_SIZE"])
+
                     if 0 <= row < game_settings["ROWS"] and 0 <= col < \
                             game_settings["COLS"] and not \
                             gameboard.flagged[row][col] and not \
@@ -195,15 +203,22 @@ def game_loop(gameboard, banner):
                     else:
                         pressed = None
 
-        elapsed_time = pygame.time.get_ticks() - start_ticks
-        seconds = min((elapsed_time // 1000), 999)
+        if gameboard.game_started and not gameboard.game_over:
+            if gameboard.start_ticks is not None:
+                elapsed_time = pygame.time.get_ticks() - gameboard.start_ticks
+                seconds = min((elapsed_time // 1000), 999)
+                banner.timer = seconds  # Update the banner's timer with the
+                # seconds value
 
-        # Check if the timer has reached 999 seconds
-        if seconds == 999:
-            game_over = True  # Set game_over to True
+                # Check if the timer has reached 999 seconds
+                if seconds == 999:
+                    gameboard.game_over = True  # Set game_over to True
+
+                # Update the display of the timer
+                banner.draw_timer()
 
         # Check for game over
-        if game_over:
+        if gameboard.game_over:
             for (mine_row, mine_col) in gameboard.mines:
                 mine_rect = gameboard.get_cell_rect(mine_row, mine_col)
                 if (mine_row, mine_col) == gameboard.game_over_mine:
@@ -219,6 +234,9 @@ def game_loop(gameboard, banner):
         # Call the draw function
         draw(gameboard, banner)
 
+        # Call the draw_timer function to update and render the timer
+        banner.draw_timer()
+
         # draw pressed state
         if gameboard.pressed is not None:
             rect = gameboard.get_cell_rect(*gameboard.pressed)
@@ -228,6 +246,20 @@ def game_loop(gameboard, banner):
         pygame.display.update()
 
 
-# game_loop(gameboard, banner)
-game_menu = GameMenu(DISPLAYSURF, game_loop, draw)
+# Create the main display surface
+DISPLAYSURF = pygame.display.set_mode((game_settings["SCREEN_WIDTH"],
+                                       game_settings["SCREEN_HEIGHT"]))
+pygame.display.set_caption('Minesweeper')
+
+
+# First, create instances of Banner and GameBoard
+banner = Banner(DISPLAYSURF, game_state_images, pressed_images)
+gameboard = GameBoard(DISPLAYSURF, banner, game_settings["ROWS"],
+                      game_settings["COLS"], game_settings["MINES"], False)
+
+# create an instance of your GameMenu with the created instances of
+# GameBoard and Banner
+game_menu = GameMenu(DISPLAYSURF, game_loop, draw, gameboard, banner)
+
+gameboard.reset_game()
 game_menu.run()
