@@ -70,10 +70,12 @@ class GameMenu:
             game_settings["ROWS"] = 9
             game_settings["COLS"] = 9
             game_settings["MINES"] = 10
+
         elif self.difficulty == 2:  # Advanced
             game_settings["ROWS"] = 16
             game_settings["COLS"] = 16
             game_settings["MINES"] = 40
+
         else:  # Expert
             game_settings["ROWS"] = 16
             game_settings["COLS"] = 30
