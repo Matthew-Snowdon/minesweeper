@@ -11,15 +11,20 @@ class GameBoard:
         self.rows = rows
         self.cols = cols
         self.mines = mines
+        self.mine_coordinates = []
         self.game_started = game_started
-        self.board = [['-' for _ in range(cols)] for _ in range(rows)]
-        self.flag_count = mines
+        self.board = [['-' for _ in range(self.cols)]
+                      for _ in range(self.rows)]
+        self.flag_count = self.mines
         self.game_over = False
         self.game_active = True
-        self.first_click = False
-        self.revealed = [[False for _ in range(cols)] for _ in range(rows)]
-        self.flagged = [[False for _ in range(cols)] for _ in range(rows)]
-        self.questioned = [[False for _ in range(cols)] for _ in range(rows)]
+        self.first_click = True
+        self.revealed = [[False for _ in range(self.rows)]
+                         for _ in range(self.cols)]
+        self.flagged = [[False for _ in range(self.rows)]
+                        for _ in range(self.cols)]
+        self.questioned = [[False for _ in range(self.rows)]
+                           for _ in range(self.cols)]
         self.game_over_mine = None
         self.game_state = 'smile'
         self.pressed = None
@@ -27,40 +32,61 @@ class GameBoard:
         self.start_ticks = None
         self.cell_clicked = False
 
-    def generate_board_except(self, row, col):
-        self.board = [['-' for col in range(game_settings["COLS"])] for row in
-                      range(game_settings["ROWS"])]
-        self.mines = []  # Reset mines
-        for i in range(game_settings["MINES"]):
-            mine_row, mine_col = random.randint(0, game_settings["ROWS"] -
-                                                1), \
-                random.randint(0, game_settings["COLS"] - 1)
-            while self.board[mine_row][mine_col] == '#' or (
-                    mine_row == row and mine_col == col):
-                mine_row, mine_col = random.randint(0, game_settings["ROWS"] -
-                                                    1), \
-                    random.randint(0, game_settings["COLS"] - 1)
-            self.board[mine_row][mine_col] = '#'
-            self.mines.append((mine_row, mine_col))  # Store mine coordinates
+    def initialize_board(self):
+        self.board = [['-' for _ in range(self.cols)] for _ in
+                      range(self.rows)]
+        self.initialize_revealed()
+        self.initialize_flagged()
+        self.initialize_questioned()
 
-        for row in range(game_settings["ROWS"]):
-            for col in range(game_settings["COLS"]):
+    def initialize_revealed(self):
+        self.revealed = [[False for _ in range(self.cols)] for _ in
+                         range(self.rows)]
+
+    def initialize_flagged(self):
+        self.flagged = [[False for _ in range(self.cols)] for _ in
+                        range(self.rows)]
+
+    def initialize_questioned(self):
+        self.questioned = [[False for _ in range(self.cols)] for _ in
+                           range(self.rows)]
+
+    def generate_board_except(self, row, col):
+        print(
+            f"Generating board with {self.rows} rows and "
+            f"{self.cols} columns and {self.mines} mines")
+        self.board = [['-' for _ in range(self.cols)]
+                      for _ in range(self.rows)]
+        self.mine_coordinates = []  # Reset mines
+        for i in range(self.mines):
+            mine_row, mine_col = random.randint(0, self.rows -
+                                                1), \
+                random.randint(0, self.cols - 1)
+            while (mine_row >= self.rows or mine_col >= self.cols or
+                   self.board[mine_row][mine_col] == '#' or
+                   (mine_row == row and mine_col == col)):
+                mine_row, mine_col = random.randint(0,
+                                                    self.rows - 1), random.randint(
+                    0, self.cols - 1)
+            self.board[mine_row][mine_col] = '#'
+            self.mine_coordinates.append((mine_row, mine_col))
+
+        for row in range(self.rows):
+            for col in range(self.cols):
                 if self.board[row][col] != '#':
                     count = 0
                     for row_offset in range(-1, 2):
                         for col_offset in range(-1, 2):
                             if (0 <= row + row_offset <
-                                game_settings["ROWS"]) and \
+                                self.rows) and \
                                     (0 <= col + col_offset <
-                                     game_settings["COLS"]):
+                                     self.cols):
                                 if self.board[row + row_offset][
                                     col + col_offset] == '#':
                                     count += 1
                     self.board[row][col] = str(count)
 
     def toggle_flag(self, row, col):
-        if self.flag_count == 0 and not self.flagged[row][col]:
-            return
         # If it's not flagged or questioned, flag it
         if not self.flagged[row][col] and not self.questioned[row][col]:
             self.flagged[row][col] = True
@@ -73,8 +99,6 @@ class GameBoard:
         # If it's questioned, reset it
         elif not self.flagged[row][col] and self.questioned[row][col]:
             self.questioned[row][col] = False
-        # Ensure flag_count doesn't go into negative
-        self.flag_count = max(0, self.flag_count)
 
     @staticmethod
     def get_cell_rect(row, col):
@@ -87,29 +111,36 @@ class GameBoard:
                            game_settings["CELL_SIZE"])
 
     def draw_board(self):
-        for row in range(game_settings["ROWS"]):
-            for col in range(game_settings["COLS"]):
+        for row in range(self.rows):
+            for col in range(self.cols):
                 rect = self.get_cell_rect(row, col)
-                if self.revealed[row][col]:
-                    cell_content = self.board[row][col]
+                if row >= self.rows or col >= self.cols:
+                    print(
+                        f"Potential IndexError - Row: {row}, Col: {col}, Self Rows: {self.rows}, Self Cols: {self.cols}")
+                    continue
+
+                # Adding an additional check here
+                if row < 0 or col < 0 or row >= len(self.board) or col >= len(
+                        self.board[0]):
+                    print(f"IndexError prevented - Row: {row}, Col: {col}")
+                    continue
+
+                cell_content = self.board[row][col]
+
+                if self.game_over and cell_content == '#':
+                    if (row, col) == self.game_over_mine:
+                        self.display_surface.blit(images['red_mine'], rect)
+                    elif self.flagged[row][col]:
+                        self.display_surface.blit(images['cross_mine'], rect)
+                    else:
+                        self.display_surface.blit(images['mine'], rect)
+                elif self.revealed[row][col]:
                     if cell_content == '#':
-                        if self.game_over and (
-                                row, col) == self.game_over_mine:
-                            self.display_surface.blit(images['red_mine'], rect)
-                        else:
-                            self.display_surface.blit(images['mine'], rect)
+                        self.display_surface.blit(images['mine'], rect)
                     elif cell_content == '0':
                         self.display_surface.blit(images['flat'], rect)
-                    elif cell_content == '1':
-                        self.display_surface.blit(images['1'], rect)
-                    elif cell_content == '2':
-                        self.display_surface.blit(images['2'], rect)
-                    elif cell_content == '3':
-                        self.display_surface.blit(images['3'], rect)
-                    elif cell_content == '4':
-                        self.display_surface.blit(images['4'], rect)
-                    elif cell_content == '5':
-                        self.display_surface.blit(images['5'], rect)
+                    else:
+                        self.display_surface.blit(images[cell_content], rect)
                 elif self.flagged[row][col]:
                     self.display_surface.blit(images['flag'], rect)
                 elif self.questioned[row][col]:
@@ -117,8 +148,12 @@ class GameBoard:
                 else:
                     self.display_surface.blit(images['tile'], rect)
 
-                pygame.draw.rect(self.display_surface, DARK_GRAY, rect,
-                                 1)
+                # Handling the 'pressed' state
+                if self.pressed is not None and self.pressed == (row, col):
+                    self.display_surface.blit(images['flat'], rect)
+
+                pygame.draw.rect(self.display_surface, DARK_GRAY, rect, 1)
+        pygame.display.update()
 
     def reveal_cell(self, row, col):
         if not self.revealed[row][col] and not self.flagged[row][col]:
@@ -136,37 +171,37 @@ class GameBoard:
                 pygame.display.update()  # Update the display
                 self.game_over_mine = (row, col)
                 print("Game Over!")
+
             elif self.board[row][col] == '0':
                 for row_offset in range(-1, 2):
                     for col_offset in range(-1, 2):
-                        if (0 <= row + row_offset < game_settings[
-                            "ROWS"]) and (
-                                0 <= col + col_offset < game_settings["COLS"]):
+                        if (0 <= row + row_offset < self.rows) and (
+                                0 <= col + col_offset < self.cols):
                             self.reveal_cell(row + row_offset,
                                              col + col_offset)
             self.check_game_won()
 
-    def reset_game(self):
-        self.start_ticks = pygame.time.get_ticks()
+    def reset_game(self, rows, cols, mines):
+        self.rows = rows
+        self.cols = cols
+        self.mines = mines
+        self.mine_coordinates = []
+        self.start_ticks = None
+        self.banner.timer = 0
         self.game_started = False
-        self.flag_count = game_settings["MINES"]
+        self.flag_count = self.mines
+        self.banner.counter = self.flag_count
         self.game_active = True
         self.game_over = False
-        self.first_click = False
+        self.first_click = True
         self.game_state = 'smile'
         self.pressed = None
-        self.revealed = [[False for _ in range(game_settings["ROWS"])] for _ in
-                         range(game_settings["COLS"])]
-        self.flagged = [[False for _ in range(game_settings["ROWS"])] for _ in
-                        range(game_settings["COLS"])]
-        self.questioned = [[False for _ in range(game_settings["ROWS"])] for _
-                           in range(game_settings["COLS"])]
-        self.generate_board_except(-1, -1)
+        self.initialize_board()
 
     def check_game_won(self):
         if not self.game_over and self.game_active:
-            for row in range(game_settings["ROWS"]):
-                for col in range(game_settings["COLS"]):
+            for row in range(self.rows):
+                for col in range(self.cols):
                     if self.board[row][col] != '#' and not \
                             self.revealed[row][col]:
                         return

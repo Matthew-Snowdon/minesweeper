@@ -1,8 +1,3 @@
--can't change between difficulty levels, advanced and expert are "list index out of range" crashes
+- menu scale stays at beginner adn it off centre when scaled up
 
-- timer starts from zero when first click is true it should start from zero when the game is reset and start when first click
--flag counter not updating
 
--add functionality to return to the gameboard if you hit ESC again
-
--current functionality saves game state when menu is brought up

@@ -7,12 +7,15 @@ class Banner:
         self.game_state_images = game_state_image
         self.pressed_images = pressed_image
         self.game_font = pygame.font.Font('assets/digital7.ttf', 70)
-        self.counter = game_settings["flag_count"]
+        self.counter = game_settings['MINES']
         self.timer = 0  # Set initial timer value
         self.button_rect = None
         self.button_state = 'normal'
         self.button_clicked = False
         self.button_img = images['smile']
+
+    def update_counter(self, new_count):
+        self.counter = new_count
 
     def draw_banner(self):
         # draw banner

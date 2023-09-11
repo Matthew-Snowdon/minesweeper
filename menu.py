@@ -45,7 +45,7 @@ class GameMenu:
             self.set_difficulty(_, difficulty))
 
         # Manually trigger the onchange event for the initial selection.
-        difficulty_selector.change(1)
+        # difficulty_selector.change(1)
 
         self.level_menu.add.button('Start Game', self.start_game)
         self.level_menu.add.button('Back', pygame_menu.events.BACK)
@@ -67,19 +67,24 @@ class GameMenu:
         # Now update the rows, cols, mines, and window size based on the
         # stored difficulty.
         if self.difficulty == 1:  # Beginner
-            game_settings["ROWS"] = 9
-            game_settings["COLS"] = 9
-            game_settings["MINES"] = 10
+            self.gameboard.rows = game_settings["ROWS"] = 9
+            self.gameboard.cols = game_settings["COLS"] = 9
+            self.gameboard.mines = game_settings["MINES"] = 10
 
         elif self.difficulty == 2:  # Advanced
-            game_settings["ROWS"] = 16
-            game_settings["COLS"] = 16
-            game_settings["MINES"] = 40
+            self.gameboard.rows = game_settings["ROWS"] = 16
+            self.gameboard.cols = game_settings["COLS"] = 16
+            self.gameboard.mines = game_settings["MINES"] = 40
 
-        else:  # Expert
-            game_settings["ROWS"] = 16
-            game_settings["COLS"] = 30
-            game_settings["MINES"] = 99
+        elif self.difficulty == 3:  # Expert
+            self.gameboard.rows = game_settings["ROWS"] = 16
+            self.gameboard.cols = game_settings["COLS"] = 30
+            self.gameboard.mines = game_settings["MINES"] = 99
+
+        print(
+            f"Setting up game with {self.gameboard.rows} rows, "
+            f"{self.gameboard.cols} cols, "
+            f"and {self.gameboard.mines} mines")
 
         update_screen_size()
 
@@ -96,12 +101,19 @@ class GameMenu:
         if not self.banner:
             self.banner = Banner(self.surface, game_state_images,
                                  pressed_images)
-        if not self.gameboard:
+
+        if self.gameboard:
+            self.gameboard.reset_game(self.gameboard.rows,
+                                      self.gameboard.cols,
+                                      self.gameboard.mines)
+            self.gameboard.initialize_board()
+        else:
             self.gameboard = GameBoard(self.surface, self.banner,
-                                       game_settings["ROWS"],
-                                       game_settings["COLS"],
-                                       game_settings["MINES"],
-                                       self.gameboard.game_started)
+                                       self.gameboard.rows,
+                                       self.gameboard.cols,
+                                       self.gameboard.mines,
+                                       game_started=False)
+            self.gameboard.initialize_board()
 
         self.gameboard.game_started = True
 
