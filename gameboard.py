@@ -31,6 +31,7 @@ class GameBoard:
         self.first_mine_revealed = False
         self.start_ticks = None
         self.cell_clicked = False
+        self.temp_flattened = set()
 
     def initialize_board(self):
         self.board = [['-' for _ in range(self.cols)] for _ in
@@ -127,26 +128,29 @@ class GameBoard:
 
                 cell_content = self.board[row][col]
 
-                if self.game_over and cell_content == '#':
-                    if (row, col) == self.game_over_mine:
-                        self.display_surface.blit(images['red_mine'], rect)
-                    elif self.flagged[row][col]:
-                        self.display_surface.blit(images['cross_mine'], rect)
-                    else:
-                        self.display_surface.blit(images['mine'], rect)
-                elif self.revealed[row][col]:
-                    if cell_content == '#':
-                        self.display_surface.blit(images['mine'], rect)
-                    elif cell_content == '0':
-                        self.display_surface.blit(images['flat'], rect)
-                    else:
-                        self.display_surface.blit(images[cell_content], rect)
-                elif self.flagged[row][col]:
-                    self.display_surface.blit(images['flag'], rect)
-                elif self.questioned[row][col]:
-                    self.display_surface.blit(images['question'], rect)
+                if (row, col) in self.temp_flattened:
+                    self.display_surface.blit(images['flat'], rect)
                 else:
-                    self.display_surface.blit(images['tile'], rect)
+                    if self.game_over and cell_content == '#':
+                        if (row, col) == self.game_over_mine:
+                            self.display_surface.blit(images['red_mine'], rect)
+                        elif self.flagged[row][col]:
+                            self.display_surface.blit(images['cross_mine'], rect)
+                        else:
+                            self.display_surface.blit(images['mine'], rect)
+                    elif self.revealed[row][col]:
+                        if cell_content == '#':
+                            self.display_surface.blit(images['mine'], rect)
+                        elif cell_content == '0':
+                            self.display_surface.blit(images['flat'], rect)
+                        else:
+                            self.display_surface.blit(images[cell_content], rect)
+                    elif self.flagged[row][col]:
+                        self.display_surface.blit(images['flag'], rect)
+                    elif self.questioned[row][col]:
+                        self.display_surface.blit(images['question'], rect)
+                    else:
+                        self.display_surface.blit(images['tile'], rect)
 
                 # Handling the 'pressed' state
                 if self.pressed is not None and self.pressed == (row, col):

@@ -8,6 +8,7 @@ from utilities import *
 pygame.init()
 
 LEFT_MOUSE_BUTTON = 1
+MIDDLE_MOUSE_BUTTON = 2
 RIGHT_MOUSE_BUTTON = 3
 should_return_to_menu = False
 
@@ -34,8 +35,6 @@ def get_neighbors(row, col):
     neighbors = []
     for i in range(-1, 2):
         for j in range(-1, 2):
-            if i == 0 and j == 0:  # Skip the cell itself
-                continue
             new_row, new_col = row + i, col + j
             if 0 <= new_row < gameboard.rows and 0 <= new_col < \
                     gameboard.cols:
@@ -53,6 +52,8 @@ def handle_keydown(event, gameboard):
     if event.key == pygame.K_ESCAPE:
         gameboard.game_started = False
         should_return_to_menu = True
+        game_menu.resize_menu(game_settings["SCREEN_WIDTH"],
+                         game_settings["SCREEN_HEIGHT"])
 
 
 def handle_mouse_actions(event, gameboard, banner):
@@ -92,6 +93,15 @@ def handle_mouse_actions(event, gameboard, banner):
                 gameboard.pressed = (row, col)
             else:
                 gameboard.pressed = None  # Reset the pressed state
+
+    elif event.button == MIDDLE_MOUSE_BUTTON:
+        if in_bounds and gameboard.game_active:
+            neighbors = get_neighbors(row, col)
+            for neighbor in neighbors:
+                n_row, n_col = neighbor
+                if not gameboard.revealed[n_row][n_col] and not gameboard.flagged[n_row][n_col]:
+                    gameboard.temp_flattened.add((n_row, n_col))
+        gameboard.draw_board()
 
     elif event.button == RIGHT_MOUSE_BUTTON:
         if gameboard.game_over:
@@ -143,6 +153,10 @@ def handle_mouse_button_up(event, gameboard, banner):
             banner.button_clicked = False
             gameboard.pressed = None  # Reset the pressed state
 
+    elif event.button == MIDDLE_MOUSE_BUTTON:
+        gameboard.temp_flattened.clear()  # Clear the temp_flattened set
+        gameboard.draw_board()
+
 
 def handle_mouse_motion(event, gameboard, banner):
     margin_size = game_settings["MARGIN_SIZE"]
@@ -154,6 +168,7 @@ def handle_mouse_motion(event, gameboard, banner):
     col = (event.pos[0] - margin_size) // cell_size
     row = (event.pos[1] - banner_height - margin_size) // cell_size
 
+    in_bounds = 0 <= row < rows and 0 <= col < cols
     outside_grid = row < 0 or row >= rows or col < 0 or col >= cols
     over_grid = 0 <= row < rows and 0 <= col < cols
     left_button_pressed = pygame.mouse.get_pressed()[0]
@@ -203,6 +218,19 @@ def handle_mouse_motion(event, gameboard, banner):
         else:
             gameboard.pressed = None
 
+    middle_button_pressed = pygame.mouse.get_pressed()[1]
+
+    if middle_button_pressed:
+        gameboard.temp_flattened.clear()
+
+        if in_bounds:
+            neighbors = get_neighbors(row, col)
+            for neighbor in neighbors:
+                n_row, n_col = neighbor
+                if not gameboard.revealed[n_row][n_col] and not gameboard.flagged[n_row][n_col]:
+                    gameboard.temp_flattened.add((n_row, n_col))
+        gameboard.draw_board()
+
 
 def handle_events(gameboard, banner):
     for event in pygame.event.get():
@@ -238,6 +266,7 @@ def game_loop(gameboard, banner):
                 # Check if the timer has reached 999 seconds
                 if seconds == 999:
                     gameboard.game_over = True  # Set game_over to True
+                    gameboard.game_state = 'sad'
 
                 # Update the display of the timer
                 banner.draw_timer()

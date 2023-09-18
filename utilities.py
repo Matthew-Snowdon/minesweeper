@@ -139,8 +139,8 @@ def draw_margins_and_corners(DISPLAYSURF, h_margin_img, v_margin_img, corners):
 
 
 image_names = ["tile", "mine", "red_mine", "cross_mine", "question", "flag",
-               "flat", "1", "2", "3", "4", "5", "h_margin", "v_margin",
-               "shadow"]
+               "flat", "1", "2", "3", "4", "5", "6", "7", "8", "h_margin",
+               "v_margin", "shadow"]
 
 # Button images need different dimensions, so we handle them separately
 button_image_names = ["smile", "smile_flat", "shock", "sad", "sad_flat",

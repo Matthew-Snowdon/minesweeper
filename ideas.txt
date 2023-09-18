@@ -1,5 +1,3 @@
-# add middle mouse button make flat 8 cells around current cell
-
 # add a menu condition for when you win the game to enter your name and save the score to the leaderboard
 
 # Add comments and docstrings when program is complete
