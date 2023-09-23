@@ -2,22 +2,59 @@ from utilities import *
 
 
 class Banner:
+    """
+    A Banner class used to display and update the game banner.
+
+        Attributes:
+            display_surface: The surface on which the banner is drawn.
+            game_state_images: A dictionary mapping game states to their
+            respective images.
+            pressed_images: A dictionary mapping game states to their
+            respective images when pressed.
+            game_font: The font used for displaying text on the banner.
+            counter: The current count of mines or flags (depending on the
+            game state).
+            timer: The game timer value.
+            button_rect: The rectangle defining the area of the button on the
+            banner.
+            button_state: The current state of the button
+            button_clicked: Boolean indicating if the button has been clicked.
+            button_img: The image of the button displayed on the banner.
+    """
     def __init__(self, display_surface, game_state_image, pressed_image):
+        """
+        Initializes the Banner with a display surface, game state images,
+        and pressed images.
+
+                Args: display_surface: The surface on which the banner will
+                be drawn. game_state_image: A dictionary mapping game states
+                to images. pressed_image: A dictionary mapping game states
+                to images when pressed.
+        """
         self.display_surface = display_surface
         self.game_state_images = game_state_image
         self.pressed_images = pressed_image
         self.game_font = pygame.font.Font('assets/digital7.ttf', 70)
         self.counter = game_settings['MINES']
-        self.timer = 0  # Set initial timer value
+        self.timer = 0
         self.button_rect = None
         self.button_state = 'normal'
         self.button_clicked = False
         self.button_img = images['smile']
 
     def update_counter(self, new_count):
+        """
+               Updates the counter with a new value.
+
+               Args:
+                   new_count: The new value to set the counter to.
+               """
         self.counter = new_count
 
     def draw_banner(self):
+        """
+                Draws the banner on the display surface.
+                """
         # draw banner
         pygame.draw.rect(self.display_surface, (179, 179, 179),
                          pygame.Rect(game_settings["MARGIN_SIZE"],
@@ -28,6 +65,12 @@ class Banner:
                                      game_settings["MARGIN_SIZE"]))
 
     def draw_counter(self):
+        """
+                Draws the counter on the banner.
+
+                Returns: A rectangle representing the area where the counter
+                is drawn.
+        """
         counter_text = self.game_font.render(f'{self.counter:03}', True, RED)
         counter_width, counter_height = counter_text.get_size()
         counter_pos_y = (game_settings["MARGIN_SIZE"] +
@@ -47,6 +90,12 @@ class Banner:
         return counter_rect
 
     def draw_timer(self):
+        """
+                Draws the timer on the banner.
+
+                Returns:
+                    A rectangle representing the area where the timer is drawn.
+                """
         timer_text = self.game_font.render(f'{self.timer:03}', True, RED)
         text_width, text_height = timer_text.get_size()
         timer_pos_y = (game_settings["MARGIN_SIZE"] +
@@ -65,6 +114,14 @@ class Banner:
         return timer_rect
 
     def draw_button(self, game_state, button_state):
+        """
+        Draws the button on the banner based on the current game state and
+        button state.
+
+                Args:
+                    game_state: The current state of the game.
+                    button_state: The current state of the button.
+                """
         timer_rect = self.draw_timer()
         counter_rect = self.draw_counter()
 
