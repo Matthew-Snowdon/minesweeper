@@ -1,3 +1,5 @@
+- menu scale stays at beginner adn it off centre when scaled up
+
 # add a menu condition for when you win the game to enter your name and save the score to the leaderboard
 
 # Add comments and docstrings when program is complete

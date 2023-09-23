@@ -5,10 +5,10 @@ from utilities import *
 
 theme = pygame_menu.themes.Theme(
     background_color=(0, 0, 0),  # Background color
-    title_background_color=(0, 0, 0),  # Title background color (same as
-    # background)
-    title_font_color=(1, 1, 1),  # Set title font color to a nearly similar
-    # color
+    # title_background_color=(0, 0, 0),  # Title background color (same as
+    # # background)
+    # title_font_color=(1, 1, 1),  # Set title font color to a nearly similar
+    # # color
     title_font_size=1  # Title font size to minimal value
 )
 
@@ -58,6 +58,7 @@ class GameMenu:
         self.menu.add.button('Quit', pygame_menu.events.EXIT)
 
     def resize_menu(self, width, height):
+        print(f"Resizing menu to width: {width}, height: {height}")
         self.create_menu(width, height)
 
     def set_difficulty(self, _, difficulty):
@@ -86,6 +87,12 @@ class GameMenu:
             f"{self.gameboard.cols} cols, "
             f"and {self.gameboard.mines} mines")
 
+        game_settings["SCREEN_WIDTH"] = game_settings["COLS"] * game_settings[
+            "CELL_SIZE"] + game_settings["MARGIN_SIZE"] * 2
+        game_settings["SCREEN_HEIGHT"] = game_settings["ROWS"] * game_settings[
+            "CELL_SIZE"] + game_settings["BANNER_HEIGHT"] + game_settings[
+                                             "MARGIN_SIZE"] * 2
+
         update_screen_size()
 
         self.surface = pygame.display.set_mode(
@@ -97,6 +104,8 @@ class GameMenu:
         # Call resize_menu after updating the screen size
         self.resize_menu(game_settings["SCREEN_WIDTH"],
                          game_settings["SCREEN_HEIGHT"])
+
+        pygame.display.flip()
 
         if not self.banner:
             self.banner = Banner(self.surface, game_state_images,
@@ -120,4 +129,6 @@ class GameMenu:
         self.game_loop(self.gameboard, self.banner)
 
     def run(self):
+        events = pygame.event.get()
+        self.menu.update(events)
         self.menu.mainloop(self.surface)
